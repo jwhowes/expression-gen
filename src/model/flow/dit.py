@@ -108,9 +108,9 @@ class DiTBlock(nn.Module):
 
 
 class DiT(nn.Module):
-    def __init__(self, d_in: int, d_model: int, d_t: int, n_layers: int, n_heads: int):
+    def __init__(self, d_in: int, num_classes: int, d_model: int, d_t: int, n_layers: int, n_heads: int):
         super(DiT, self).__init__()
-
+        self.c_emb = nn.Embedding(num_classes, d_model)
         self.t_emb = SinusoidalEmbedding(d_t)
 
         self.stem = nn.Linear(d_in, d_model)
@@ -122,12 +122,12 @@ class DiT(nn.Module):
 
         self.head = nn.Linear(d_model, d_in)
 
-    def forward(self, x: Tensor, t: Tensor) -> Tensor:
-        t_emb = self.t_emb(t)
+    def forward(self, x: Tensor, c: Tensor, t: Tensor) -> Tensor:
+        condition = self.c_emb(c) + self.t_emb(t)
 
         x = self.stem(x)
 
         for layer in self.layers:
-            x = layer(x, t_emb)
+            x = layer(x, condition)
 
         return self.head(x)
