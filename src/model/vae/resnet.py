@@ -21,9 +21,11 @@ class ResNetBlock(nn.Module):
 
 class ResNet(nn.Module):
     def __init__(
-            self, image_channels: int,
-            dims: Tuple[int, ...], depths: Tuple[int, ...],
-            sample: Literal["up", "down"]
+        self,
+        image_channels: int,
+        dims: Tuple[int, ...],
+        depths: Tuple[int, ...],
+        sample: Literal["up", "down"],
     ):
         super(ResNet, self).__init__()
 
@@ -31,24 +33,16 @@ class ResNet(nn.Module):
 
         layers = [nn.Conv2d(image_channels, dims[0], kernel_size=5, padding=2)]
         for i in range(len(dims) - 1):
-            layers += [
-                ResNetBlock(dims[i], num_groups=32)
-                for _ in range(depths[i])
-            ]
+            layers += [ResNetBlock(dims[i], num_groups=32) for _ in range(depths[i])]
 
             if sample == "up":
                 layers += [
                     nn.ConvTranspose2d(dims[i], dims[i + 1], kernel_size=2, stride=2)
                 ]
             else:
-                layers += [
-                    nn.Conv2d(dims[i], dims[i + 1], kernel_size=2, stride=2)
-                ]
+                layers += [nn.Conv2d(dims[i], dims[i + 1], kernel_size=2, stride=2)]
 
-        layers += [
-            ResNetBlock(dims[-1], num_groups=32)
-            for _ in range(depths[-1])
-        ]
+        layers += [ResNetBlock(dims[-1], num_groups=32) for _ in range(depths[-1])]
 
         self.module = nn.Sequential(*layers)
 

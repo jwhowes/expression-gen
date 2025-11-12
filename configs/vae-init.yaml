@@ -1,0 +1,23 @@
+num_epochs: 5
+log_interval: 100
+
+lr: 3e-4
+weight_decay: 0.2
+
+model:
+  image_channels: 1
+  latent_channels: 2
+
+  encoder:
+    dims: [64, 128, 256]
+    depths: [2, 3, 3]
+
+  decoder:
+    dims: [ 64, 128, 256 ]
+    depths: [ 2, 3, 3 ]
+
+loss:
+  kl_weight: 1e-6
+
+dataset:
+  batch_size: 32

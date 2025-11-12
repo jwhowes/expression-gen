@@ -31,9 +31,7 @@ class SwiGLU(nn.Module):
         self.out = nn.Linear(d_hidden, d_model)
 
     def forward(self, x: Tensor) -> Tensor:
-        return self.out(
-            F.silu(self.gate(x)) * self.hidden(x)
-        )
+        return self.out(F.silu(self.gate(x)) * self.hidden(x))
 
 
 class SinusoidalEmbedding(nn.Module):
@@ -45,7 +43,7 @@ class SinusoidalEmbedding(nn.Module):
         self.register_buffer(
             "theta",
             1.0 / (theta ** (2 * torch.arange(d_model // 2) / d_model)),
-            persistent=False
+            persistent=False,
         )
 
         self.ffn = SwiGLU(d_model)
@@ -53,10 +51,7 @@ class SinusoidalEmbedding(nn.Module):
     def forward(self, x: Tensor) -> Tensor:
         x = torch.outer(x, self.theta)
 
-        return self.ffn(torch.stack((
-            x.cos(),
-            x.sin()
-        ), dim=-1).flatten(-2))
+        return self.ffn(torch.stack((x.cos(), x.sin()), dim=-1).flatten(-2))
 
 
 class Attention(nn.Module):
@@ -79,10 +74,7 @@ class Attention(nn.Module):
 
         attn = self.scale * (q @ k.transpose(-2, -1))
 
-        return self.W_o(rearrange(
-            F.softmax(attn, dim=-1) @ v,
-            "b n l d -> b l (n d)"
-        ))
+        return self.W_o(rearrange(F.softmax(attn, dim=-1) @ v, "b n l d -> b l (n d)"))
 
 
 class DiTBlock(nn.Module):
@@ -108,17 +100,24 @@ class DiTBlock(nn.Module):
 
 
 class DiT(nn.Module):
-    def __init__(self, d_in: int, num_classes: int, d_model: int, d_t: int, n_layers: int, n_heads: int):
+    def __init__(
+        self,
+        d_in: int,
+        num_classes: int,
+        d_model: int,
+        d_t: int,
+        n_layers: int,
+        n_heads: int,
+    ):
         super(DiT, self).__init__()
         self.c_emb = nn.Embedding(num_classes, d_model)
         self.t_emb = SinusoidalEmbedding(d_t)
 
         self.stem = nn.Linear(d_in, d_model)
 
-        self.layers = nn.ModuleList([
-            DiTBlock(d_model, n_heads, d_t)
-            for _ in range(n_layers)
-        ])
+        self.layers = nn.ModuleList(
+            [DiTBlock(d_model, n_heads, d_t) for _ in range(n_layers)]
+        )
 
         self.head = nn.Linear(d_model, d_in)
 
