@@ -29,3 +29,15 @@ class VAELoss(nn.Module):
             recon_loss.item(),
             kl.item(),
         )
+
+
+class FlowMatchLoss(nn.Module):
+    def __init__(self, sigma_min: float):
+        super(FlowMatchLoss, self).__init__()
+
+        self.sigma_offset = 1 - sigma_min
+
+    def forward(self, pred_flow: Tensor, x_0: Tensor, x_1: Tensor) -> Tensor:
+        flow = x_1 - self.sigma_offset * x_0
+
+        return F.mse_loss(pred_flow, flow)

@@ -1,5 +1,6 @@
 num_epochs: 5
 log_interval: 100
+clip_grad: 1.0
 
 lr: 3e-4
 weight_decay: 0.2
@@ -17,7 +18,7 @@ model:
     depths: [ 2, 3, 3 ]
 
 loss:
-  kl_weight: 1e-6
+  kl_weight: 1e-4
 
 dataset:
   batch_size: 32

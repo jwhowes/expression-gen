@@ -2,7 +2,7 @@ from src.config import Config
 from .dit import DiT
 
 
-class FlowModelConfig(Config):
+class FlowMatchModelConfig(Config):
     latent_channels: int
     num_classes: int
 
