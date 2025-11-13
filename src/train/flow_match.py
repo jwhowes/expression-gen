@@ -1,4 +1,5 @@
 import torch
+import os
 
 from typing import Optional
 from pydantic import Field
@@ -10,7 +11,7 @@ from src.model.flow import FlowMatchModelConfig
 from src.data import ExpressionDatasetConfig
 from src.train.trainer import Trainer
 from src.loss import FlowMatchLoss
-from src.model.vae import VAEEncoder
+from src.model.vae import VAEConfig, VAEEncoder
 
 
 class SamplerConfig(Config):
@@ -49,7 +50,24 @@ class FlowMatchTrainer(Trainer):
     metrics = ("loss",)
 
     def load_encoder(self) -> VAEEncoder:
-        raise NotImplementedError
+        exp_dir = os.path.join("experiments", self.config.encoder.exp_name)
+
+        encoder_config = VAEConfig.from_yaml(os.path.join(exp_dir, "config.yaml"))
+        encoder = encoder_config.get_encoder()
+
+        encoder.load_state_dict(
+            torch.load(
+                os.path.join(
+                    exp_dir,
+                    "checkpoints",
+                    f"checkpoint_{self.config.encoder.ckpt:03}.pth",
+                )
+            )
+        )
+        encoder.eval()
+        encoder.requires_grad_(False)
+
+        return encoder
 
     def train(self):
         encoder = self.load_encoder()

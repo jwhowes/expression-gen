@@ -108,6 +108,7 @@ class DiT(nn.Module):
         d_t: int,
         n_layers: int,
         n_heads: int,
+        ema_gamma: float = 0.99,
     ):
         super(DiT, self).__init__()
         self.c_emb = nn.Embedding(num_classes, d_model)
@@ -121,7 +122,31 @@ class DiT(nn.Module):
 
         self.head = nn.Linear(d_model, d_in)
 
+        self.gamma = ema_gamma
+        self.register_buffer(
+            "initialized",
+            torch.tensor(False),
+        )
+        self.register_buffer("running_mean", torch.tensor(0.0))
+        self.register_buffer("running_std", torch.tensor(0.0))
+
     def forward(self, x: Tensor, c: Tensor, t: Tensor) -> Tensor:
+        if self.training:
+            if not self.initialized:
+                self.initialized.fill_(True)
+
+                self.running_mean.fill_(x.mean())
+                self.running_std.fill_(x.std())
+            else:
+                self.running_mean.fill_(
+                    self.gamma * self.running_mean + (1 - self.gamma) * x.mean()
+                )
+                self.running_std.fill_(
+                    self.gamma * self.running_std + (1 - self.gamma) * x.std()
+                )
+
+        x = (x - self.running_mean) / self.running_std
+
         condition = self.c_emb(c) + self.t_emb(t)
 
         x = self.stem(x)
