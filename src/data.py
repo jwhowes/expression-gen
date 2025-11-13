@@ -22,7 +22,7 @@ class ExpressionDataset(Dataset):
             [
                 transforms.ToTensor(),
                 transforms.Resize(image_size),
-                transforms.Normalize(mean=(0.5060,), std=(0.2506,)),
+                transforms.Normalize(mean=(0.5,), std=(0.5,)),
             ]
         )
 

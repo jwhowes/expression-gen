@@ -1,5 +1,4 @@
 import torch
-import os
 
 from typing import Optional
 from pydantic import Field
@@ -11,7 +10,7 @@ from src.model.flow import FlowMatchModelConfig
 from src.data import ExpressionDatasetConfig
 from src.train.trainer import Trainer
 from src.loss import FlowMatchLoss
-from src.model.vae import VAEConfig, VAEEncoder
+from src.model.vae import VAEEncoder
 
 
 class SamplerConfig(Config):
@@ -59,15 +58,11 @@ class FlowMatchTrainer(Trainer):
 
         dataset = self.config.dataset.get_dataset()
         dataloader = DataLoader(
-            dataset,
-            batch_size=self.config.dataset.batch_size,
-            shuffle=True
+            dataset, batch_size=self.config.dataset.batch_size, shuffle=True
         )
 
         opt = torch.optim.AdamW(
-            model.parameters(),
-            lr=self.config.lr,
-            weight_decay=self.config.weight_decay
+            model.parameters(), lr=self.config.lr, weight_decay=self.config.weight_decay
         )
 
         criterion = FlowMatchLoss(self.config.sampler.sigma_min)
@@ -84,14 +79,15 @@ class FlowMatchTrainer(Trainer):
 
                 opt.zero_grad()
 
-                t = (torch.randn(B) * self.config.sampler.std + self.config.sampler.mean).sigmoid()
+                t = (
+                    torch.randn(B) * self.config.sampler.std + self.config.sampler.mean
+                ).sigmoid()
 
                 x_1 = torch.randn_like(image)
 
-                x_t = (
-                    (1 - sigma_offset * t.view(B, 1, 1, 1)) * x_0 +
-                    t.view(B, 1, 1, 1) * x_1
-                )
+                x_t = (1 - sigma_offset * t.view(B, 1, 1, 1)) * x_0 + t.view(
+                    B, 1, 1, 1
+                ) * x_1
 
                 pred_flow = model(x_t, label, t)
 
@@ -99,7 +95,9 @@ class FlowMatchTrainer(Trainer):
                 loss.backward()
 
                 if self.config.clip_grad:
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), self.config.clip_grad)
+                    torch.nn.utils.clip_grad_norm_(
+                        model.parameters(), self.config.clip_grad
+                    )
 
                 opt.step()
 

@@ -21,7 +21,7 @@ class VAELoss(nn.Module):
     def forward(
         self, recon: Tensor, image: Tensor, dist: DiagonalGaussian
     ) -> Tuple[Tensor, Tensor, Tensor]:
-        recon_loss = F.mse_loss(recon, image)
+        recon_loss = F.huber_loss(recon, image)
         kl = dist.kl().mean()
 
         return (
@@ -40,4 +40,4 @@ class FlowMatchLoss(nn.Module):
     def forward(self, pred_flow: Tensor, x_0: Tensor, x_1: Tensor) -> Tensor:
         flow = x_1 - self.sigma_offset * x_0
 
-        return F.mse_loss(pred_flow, flow)
+        return F.huber_loss(pred_flow, flow)
